@@ -7,3 +7,4 @@ dist/
 .env.*
 !.env.example
 !server/.env.example
+backend_coopserve/
