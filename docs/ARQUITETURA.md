@@ -1,15 +1,19 @@
-# Separação de frontend e backend
+# Arquitetura de hospedagem
 
-Frontend público: joaoelima/cooperativadeservi-os. React, CSS, catálogo demonstrativo e rótulos de status.
-Backend privado: joaoelima/backend_coopserve. Express, Atlas, autenticação, autorização, pedidos, fotos e testes.
-Segredos somente no ambiente do Render.
+Frontend público: joaoelima/cooperativadeservi-os.
+Frontend real estático: https://coopserve-web.onrender.com, Static Site srv-dbej55hsrm7s73cag28g.
+Backend privado: joaoelima/backend_coopserve, Web Service srv-dbee5ujrjlhs73fdoar0.
+API: https://coopserve-app.onrender.com/api.
 
-O Render mantém o endereço coopserve-app.onrender.com. Durante o build, o backend busca e compila o commit público listado em frontend-ref.txt. Somente dist é servido ao navegador.
-As chamadas /api chegam ao backend na mesma origem. Não foi habilitado CORS amplo nem cookies entre sites.
-Pages continua sendo demonstração sem cadastro/login real.
+O navegador acessa /api pela origem do frontend. Render aplica rewrite /api/* para o Web Service. Não é um redirect.
+O backend aceita a origem própria e a origem exata FRONTEND_ORIGIN=https://coopserve-web.onrender.com. Não foi habilitado CORS amplo.
+Cookies continuam HttpOnly, Secure, SameSite=Lax, Path=/ e sem Domain; API usa Cache-Control no-store.
+Nenhum segredo do banco é enviado ao frontend ou ao Static Site.
 
-A remoção dos arquivos do backend da main pública não apaga commits antigos, cópias ou forks. A busca por padrões de credenciais em 65 blobs históricos não encontrou correspondências; não equivale a auditoria de segurança completa.
-Não reescrever o histórico público nem trocar a visibilidade sem decisão específica do proprietário.
+A interface estática responde pela CDN mesmo durante suspensão da API. ConnectionGate mantém uma tela de conexão animada e faz tentativas limitadas de GET /api/health. Falha persistente oferece nova tentativa manual.
+Login e catálogo são carregados após prontidão. Operações de escrita não são repetidas automaticamente.
 
-A checagem agendada da API é best effort. Render Free suspende após 15 minutos sem tráfego; GitHub Actions pode atrasar ou desativar agendamentos por inatividade.
-Fontes: https://render.com/docs/free e https://docs.github.com/en/actions/reference/workflows-and-actions/events-that-trigger-workflows#schedule
+O endereço antigo coopserve-app ainda serve uma cópia da interface construída pelo backend usando frontend-ref.txt. Por depender do Web Service, esse endereço pode mostrar a página de despertar do Render. O acesso principal passa a ser coopserve-web.
+
+Publicação estática automática pela main. Backend privado continua automático pela própria main. Pages permanece demonstração.
+O código anterior da API continua em commits históricos públicos. Credenciais não devem estar em nenhum repositório.
