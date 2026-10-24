@@ -1,5 +1,7 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Handshake, ClipboardList, CircleDollarSign, CalendarDays, ArrowLeft, ArrowRight, CheckCircle2, ShieldCheck } from 'lucide-react';
+
+import { markIntroSeen } from './intro-storage';
 
 const steps = [
   { icon: ClipboardList, tag: 'Conte com a CoopServe', title: 'O serviço que você precisa, em um só lugar.',
@@ -15,6 +17,7 @@ const steps = [
 
 export default function WelcomeIntro({ onStart, onExplore }) {
   const [step, setStep] = useState(0);
+  useEffect(()=>{ markIntroSeen(); },[]);
   const current = steps[step], Icon = current.icon;
   return <main className="welcome intro" aria-label="Conheça o CoopServe">
     <div className="introContent">
