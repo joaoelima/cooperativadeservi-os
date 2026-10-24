@@ -52,3 +52,8 @@ Para reproduzir o build: `npm ci` e `npm run build`. Para verificar localmente a
 ## Cadastro e login reais
 
 A primeira integração utiliza MongoDB Atlas e um Web Service Node.js no Render, servindo a interface e a API na mesma origem. Veja [configuração, segurança e limites](docs/AUTENTICACAO.md). O GitHub Pages continua como demonstração.
+
+
+## Fluxo funcional
+
+Consulte docs/FLUXO_FUNCIONAL.md para as funcionalidades atuais, regras e limitações. O fluxo conectado usa Atlas e Render; o Pages é apenas demonstração.

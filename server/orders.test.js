@@ -1,3 +1,4 @@
+import { catalog } from '../shared/catalog.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { once } from 'node:events';
@@ -19,6 +20,7 @@ test('pedidos isolados por cliente, painel exclusivo, análise e troca de senha'
   }
   const a = cookieFor(client), b = cookieFor(other), central = cookieFor(admin), secondAdminSession = cookieFor(admin);
   const store = {
+    activeCatalog: async()=>catalog,
     findSession: async hash => sessions.get(hash),
     findUserById: async id => users.get(id),
     findUserByEmail: async email => [...users.values()].find(user=>user.email===email),
@@ -57,7 +59,7 @@ test('pedidos isolados por cliente, painel exclusivo, análise e troca de senha'
   assert.equal((await (await request('/api/orders',{cookie:a})).json()).orders.length,1);
   response=await request('/api/admin/orders',{cookie:central});
   const list=await response.json();assert.equal(list.total,1);assert.equal(list.orders[0].id,created.id);
-  assert.equal((await request('/api/admin/orders?status=scheduled',{cookie:central})).status,400);
+  assert.equal((await request('/api/admin/orders?status=unknown',{cookie:central})).status,400);
   assert.equal((await request('/api/admin/orders?page=-1',{cookie:central})).status,400);
   assert.equal((await request('/api/admin/orders/'+created.id+'/review',{cookie:a,body:{}})).status,403);
   response=await request('/api/admin/orders/'+created.id+'/review',{cookie:central,body:{}});
@@ -73,3 +75,4 @@ test('pedidos isolados por cliente, painel exclusivo, análise e troca de senha'
   assert.equal((await request('/api/auth/login',{body:{email:admin.email,password:original}})).status,401);
   assert.equal((await request('/api/auth/login',{body:{email:admin.email,password:'uma nova senha muito segura'}})).status,200);
 });
+

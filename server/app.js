@@ -1,4 +1,6 @@
 import express from 'express';
+import { installCatalog } from './catalog.js';
+import { installProfile } from './profile.js';
 import { installOrders } from './orders.js';
 import helmet from 'helmet';
 import { rateLimit } from 'express-rate-limit';
@@ -6,7 +8,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { hashPassword, verifyPassword, parseCredentials, newToken, sessionDigest } from './security.js';
 
-const publicUser = user => ({ id: String(user._id), name: user.name, email: user.email, role: user.role });
+const publicUser = user => ({ id: String(user._id), name: user.name, email: user.email, role: user.role, phone: user.phone || '', address: user.address || '' });
 export function createApp({ store, origin, production = false, serveFrontend = true, dummyHash }) {
   const app = express();
   const cookieName = production ? '__Host-coopserve' : 'coopserve';
@@ -29,7 +31,8 @@ export function createApp({ store, origin, production = false, serveFrontend = t
     }
     next();
   });
-  app.use('/api', express.json({ limit: '16kb', strict: true }));
+  app.use('/api/orders', rateLimit({ windowMs: 15*60*1000, limit: 100, standardHeaders: 'draft-8', legacyHeaders: false, message: { error: 'Muitas requisições. Aguarde alguns minutos.' } }), express.json({ limit: '2mb', strict: true }));
+  app.use('/api', express.json({ limit: '64kb', strict: true }));
   const limiter = rateLimit({
     windowMs: 15 * 60 * 1000, limit: 20, standardHeaders: 'draft-8', legacyHeaders: false,
     message: { error: 'Muitas tentativas. Aguarde 15 minutos e tente novamente.' },
@@ -106,6 +109,8 @@ export function createApp({ store, origin, production = false, serveFrontend = t
   });
   app.get('/api/admin/access', requireUser, requireAdmin, (_req, res) => res.json({ allowed: true }));
   installOrders(app, { store, requireUser, requireAdmin });
+  installProfile(app, { store, requireUser, publicUser });
+  installCatalog(app, { store, requireUser, requireAdmin });
   app.use('/api', (_req, res) => res.status(404).json({ error: 'Recurso não encontrado.' }));
   if (serveFrontend) {
     const dist = fileURLToPath(new URL('../dist/', import.meta.url));
