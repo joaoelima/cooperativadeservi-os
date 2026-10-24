@@ -1,4 +1,5 @@
 import express from 'express';
+import { installOrders } from './orders.js';
 import helmet from 'helmet';
 import { rateLimit } from 'express-rate-limit';
 import path from 'node:path';
@@ -43,14 +44,14 @@ export function createApp({ store, origin, production = false, serveFrontend = t
   const cookieOptions = { httpOnly: true, secure: production, sameSite: 'lax', path: '/' };
   async function startSession(res, user) {
     const token = newToken();
-    await store.createSession({ tokenHash: sessionDigest(token), userId: String(user._id), expiresAt: new Date(Date.now() + lifetime), createdAt: new Date() });
+    await store.createSession({ tokenHash: sessionDigest(token), userId: String(user._id), version: user.passwordVersion || 0, expiresAt: new Date(Date.now() + lifetime), createdAt: new Date() });
     res.cookie(cookieName, token, { ...cookieOptions, maxAge: lifetime });
   }
   async function requireUser(req, res, next) {
     const token = tokenFrom(req);
     const session = token && await store.findSession(sessionDigest(token));
     const user = session && await store.findUserById(session.userId);
-    if (!user) return res.status(401).json({ error: 'Entre na sua conta para continuar.' });
+    if (!user || (session.version || 0) !== (user.passwordVersion || 0)) return res.status(401).json({ error: 'Entre na sua conta para continuar.' });
     req.user = user;
     next();
   }
@@ -84,11 +85,27 @@ export function createApp({ store, origin, production = false, serveFrontend = t
     res.clearCookie(cookieName, cookieOptions);
     res.status(204).end();
   });
-  // Server-side authorization, ready for central-only endpoints.
-  app.get('/api/admin/access', requireUser, (req, res) => {
+
+  function requireAdmin(req, res, next) {
     if (req.user.role !== 'admin') return res.status(403).json({ error: 'Acesso restrito à central CoopServe.' });
-    res.json({ allowed: true });
+    next();
+  }
+  app.use('/api/auth/password', limiter);
+  app.post('/api/auth/password', requireUser, async (req, res) => {
+    const { currentPassword, newPassword } = req.body || {};
+    if (typeof currentPassword !== 'string' || typeof newPassword !== 'string' || currentPassword.length > 128 || newPassword.length < 15 || newPassword.length > 128 || currentPassword === newPassword) {
+      return res.status(400).json({ error: 'Informe a senha atual e uma nova senha diferente, com 15 a 128 caracteres.' });
+    }
+    if (!await verifyPassword(currentPassword, req.user.passwordHash)) return res.status(401).json({ error: 'Senha atual incorreta.' });
+    const changed = await store.changePassword(String(req.user._id), req.user.passwordHash, await hashPassword(newPassword));
+    if (!changed) return res.status(409).json({ error: 'A conta foi atualizada. Entre novamente para tentar.' });
+    // Version change invalidates every old session immediately, even if cleanup fails.
+    res.clearCookie(cookieName, cookieOptions);
+    await store.deleteUserSessions(String(req.user._id));
+    res.json({ changed: true });
   });
+  app.get('/api/admin/access', requireUser, requireAdmin, (_req, res) => res.json({ allowed: true }));
+  installOrders(app, { store, requireUser, requireAdmin });
   app.use('/api', (_req, res) => res.status(404).json({ error: 'Recurso não encontrado.' }));
   if (serveFrontend) {
     const dist = fileURLToPath(new URL('../dist/', import.meta.url));
