@@ -47,3 +47,8 @@ O workflow `.github/workflows/deploy-pages.yml` compila e publica a cada push na
 O repositório deve permanecer privado. GitHub Pages em repositório privado requer um plano compatível (para conta pessoal, GitHub Pro). Se Pages solicitar upgrade, ajuste o plano sem mudar a visibilidade. O site publicado pode ser público mesmo com o código em repositório privado.
 
 Para reproduzir o build: `npm ci` e `npm run build`. Para verificar localmente a versão compilada: `npm run preview` e abra o endereço com o caminho `/cooperativadeservi-os/`.
+
+
+## Cadastro e login reais
+
+A primeira integração utiliza MongoDB Atlas e um Web Service Node.js no Render, servindo a interface e a API na mesma origem. Veja [configuração, segurança e limites](docs/AUTENTICACAO.md). O GitHub Pages continua como demonstração.
