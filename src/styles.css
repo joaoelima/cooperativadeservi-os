@@ -10,3 +10,6 @@
 @media(max-width:360px){.introContent{padding:20px}.introTop .logo{font-size:22px}.introSlide h1{font-size:26px}.introCard{left:0;right:0}}
 @media(max-height:740px) and (max-width:699px){.introContent{padding:20px 24px 16px}.introSlide{padding:20px 0}.introArt{height:170px;margin-bottom:22px}.introOrbit{width:140px;height:140px}.introIcon{width:100px;height:100px;border-radius:28px;margin-bottom:26px}.introIcon>svg{width:48px;height:48px}.introSeal{top:6px;right:calc(50% - 74px)}.introCard{padding:10px}.introSlide h1{font-size:26px;margin:10px 0}.introSlide>p{font-size:13px;line-height:1.6}.introProgress{margin-bottom:14px}.introSignature{margin-top:0}}
 @media(prefers-reduced-motion:reduce){.introDots button{transition:none}}
+
+@media(max-width:360px) and (max-height:700px){.introSlide{padding:14px 0}.introArt{height:140px;margin-bottom:16px}.introSignature{display:none}.introSlide h1{font-size:25px}.introProgress{margin-bottom:12px}}
+
